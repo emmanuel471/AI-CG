@@ -7,6 +7,7 @@ import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.ses.SesClient;
 
 @Configuration
 public class StorageConfig {
@@ -24,6 +25,15 @@ public class StorageConfig {
     public S3Client s3Client() {
         AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, accessSecret);
         return S3Client.builder()
+                .region(Region.of(region))
+                .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
+                .build();
+    }
+
+    @Bean
+    public SesClient sesClient() {
+        AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, accessSecret);
+        return SesClient.builder()
                 .region(Region.of(region))
                 .credentialsProvider(StaticCredentialsProvider.create(awsCreds))
                 .build();

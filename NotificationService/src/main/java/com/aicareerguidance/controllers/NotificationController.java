@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.aicareerguidance.dtos.NotificationRequest;
 import com.aicareerguidance.services.NotificationService;
 import lombok.RequiredArgsConstructor;
-import jakarta.mail.MessagingException;
 
 @CrossOrigin
 @RestController
@@ -24,7 +23,7 @@ public class NotificationController {
     public HttpStatus postEmail(@RequestBody NotificationRequest request) {
         try {
             notificationService.postEmail(request);
-        } catch (IOException | MessagingException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return HttpStatus.BAD_REQUEST;
            

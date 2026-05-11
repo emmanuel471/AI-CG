@@ -2,16 +2,19 @@ package com.aicareerguidance.impls;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
 import com.aicareerguidance.config.StorageConfig;
 import com.aicareerguidance.dtos.NotificationRequest;
@@ -30,7 +33,9 @@ import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 @Slf4j
 public class NotificationServiceImpl implements NotificationService {
 
-    private final JavaMailSender mailSender;
+    private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
+
+    private final RestTemplate restTemplate = new RestTemplate();
     private final FreeMarkerConfigurer freemarkerConfigurer;
     private final NotificationTemplateRepository notificationTemplateRepository;
     private final NotificationAuditRepository notificationAuditRepository;
@@ -42,14 +47,21 @@ public class NotificationServiceImpl implements NotificationService {
     @Value("${notification.service.template.folder}")
     private String notificationTemplates;
 
+    @Value("${brevo.api-key}")
+    private String brevoApiKey;
+
+    @Value("${brevo.from-email}")
+    private String fromEmail;
+
+    @Value("${brevo.from-name}")
+    private String fromName;
+
     public NotificationServiceImpl(
-            JavaMailSender mailSender,
             FreeMarkerConfigurer freemarkerConfigurer,
             NotificationTemplateRepository notificationTemplateRepository,
             NotificationAuditRepository notificationAuditRepository,
             StorageConfig storageConfig) {
 
-        this.mailSender = mailSender;
         this.freemarkerConfigurer = freemarkerConfigurer;
         this.notificationTemplateRepository = notificationTemplateRepository;
         this.notificationAuditRepository = notificationAuditRepository;
@@ -57,8 +69,7 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public void postEmail(NotificationRequest notificationRequest)
-            throws MessagingException, IOException {
+    public void postEmail(NotificationRequest notificationRequest) throws IOException {
 
         try {
             validateRequest(notificationRequest);
@@ -83,16 +94,15 @@ public class NotificationServiceImpl implements NotificationService {
             sendEmail(templateDetails, notificationRequest.getTo(), htmlBody);
 
             saveAudit(templateID,
-                      templateDetails.getFromAddress(),
+                      fromEmail,
                       notificationRequest.getTo(),
                       templateDetails.getSubject(),
                       templateDetails.getTemplateFileName());
 
         } catch (Exception e) {
-            log.error("Failed to send notification for templateID={}: {}", 
-                      notificationRequest != null ? notificationRequest.getTemplateID() : "unknown", 
+            log.error("Failed to send notification for templateID={}: {}",
+                      notificationRequest != null ? notificationRequest.getTemplateID() : "unknown",
                       e.getMessage(), e);
-            // propagate so controller or global handler can return proper 500
             throw e;
         }
     }
@@ -145,25 +155,33 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
-    private void sendEmail(Notification template, String[] to, String htmlBody) throws MessagingException {
-        MimeMessage message = mailSender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+    private void sendEmail(Notification template, String[] to, String htmlBody) {
+        List<Map<String, String>> toList = Arrays.stream(to)
+                .map(email -> Map.of("email", email.trim()))
+                .collect(Collectors.toList());
 
-        helper.setTo(to);
-        helper.setFrom(template.getFromAddress());
-        helper.setSubject(template.getSubject());
+        Map<String, Object> body = new java.util.LinkedHashMap<>();
+        body.put("sender", Map.of("name", fromName, "email", fromEmail));
+        body.put("to", toList);
+        body.put("subject", template.getSubject());
+        body.put("htmlContent", htmlBody);
 
         if (template.getCcAddresses() != null && !template.getCcAddresses().isBlank()) {
-            helper.setCc(template.getCcAddresses().split(","));
+            List<Map<String, String>> ccList = Arrays.stream(template.getCcAddresses().split(","))
+                    .map(email -> Map.of("email", email.trim()))
+                    .collect(Collectors.toList());
+            body.put("cc", ccList);
         }
 
-        helper.setText(htmlBody, true);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("api-key", brevoApiKey);
 
         try {
-            mailSender.send(message);
-            log.info("Email sent successfully to {} for templateID={}", String.join(", ", to), template.getTemplateID());
+            restTemplate.postForObject(BREVO_API_URL, new HttpEntity<>(body, headers), String.class);
+            log.info("Email sent via Brevo to {} for templateID={}", String.join(", ", to), template.getTemplateID());
         } catch (Exception e) {
-            log.error("Failed to send email via SMTP for templateID={} to recipients={}: {}",
+            log.error("Failed to send email via Brevo for templateID={} to recipients={}: {}",
                       template.getTemplateID(),
                       String.join(", ", to),
                       e.getMessage(), e);
