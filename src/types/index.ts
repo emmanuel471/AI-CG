@@ -30,6 +30,12 @@ export interface User {
   createdAt: string;
 }
 
+export interface PasswordResetRequest {
+  email: string;
+  code: string;
+  newPassword: string;
+}
+
 export interface ProfileResponse {
   skills: string[];
   interests: string[];

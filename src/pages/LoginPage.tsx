@@ -168,6 +168,12 @@ export function LoginPage() {
             </button>
           </div>
 
+            <div className="flex justify-end -mt-1">
+              <Link to="/forgot-password" className="text-sm text-primary-glow hover:underline">
+                Forgot password?
+              </Link>
+            </div>
+
             <Button
               type="submit"
               className="w-full cursor-pointer"

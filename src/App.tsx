@@ -15,6 +15,7 @@ import { Provider } from "react-redux";
 import { ProfilePage } from "./pages/ProfilePage";
 import { persistor, store } from "./store/store";
 import { VerifyEmailPage } from "./pages/VerifyEmailPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import SessionAlert from "./components/ui/SessionAlert";
 
 export default function App() {
@@ -29,7 +30,8 @@ export default function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />            
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />            
             <Route path="/dashboard" element={<RouteShell><DashboardPage /></RouteShell>}/>
             <Route path="/recommendations" element={<RouteShell><RecommendationsPage /></RouteShell>}/>
             <Route path="/skills-gap" element={<RouteShell><SkillsGapPage /></RouteShell>}/>
