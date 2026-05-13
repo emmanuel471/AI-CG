@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Search, TrendingUp, DollarSign, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 
 import {
@@ -31,7 +32,8 @@ function CareerCard({ career, index }: CareerCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.06 }}
     >
-      <Card hoverable className="h-full">
+      <Link to={`/recommendations/${career.id}`} className="block h-full">
+      <Card hoverable className="h-full cursor-pointer">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <h3 className="text-xl font-semibold">{career.title}</h3>
@@ -76,6 +78,7 @@ function CareerCard({ career, index }: CareerCardProps) {
           </div>
         </div>
       </Card>
+      </Link>
     </motion.div>
   );
 }

@@ -9,6 +9,7 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { RouteShell } from "./layouts/RouteShell";
 import { RecommendationsPage } from "./pages/RecommendationsPage";
+import { CareerDetailPage } from "./pages/CareerDetailPage";
 import { SkillsGapPage } from "./pages/SkillsGapPage";
 import { PersistGate } from "redux-persist/integration/react";
 import { Provider } from "react-redux";
@@ -34,6 +35,7 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />            
             <Route path="/dashboard" element={<RouteShell><DashboardPage /></RouteShell>}/>
             <Route path="/recommendations" element={<RouteShell><RecommendationsPage /></RouteShell>}/>
+            <Route path="/recommendations/:id" element={<RouteShell><CareerDetailPage /></RouteShell>}/>
             <Route path="/skills-gap" element={<RouteShell><SkillsGapPage /></RouteShell>}/>
             <Route path="/profile" element={<RouteShell><ProfilePage /></RouteShell>}/>          
           </Route>
