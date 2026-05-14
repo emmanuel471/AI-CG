@@ -10,5 +10,4 @@ public class ProfileServiceApp {
 		
 		SpringApplication.run(ProfileServiceApp.class, args);
 	}
-
 }
